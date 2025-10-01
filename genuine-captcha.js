@@ -222,7 +222,7 @@ export default class GenuineCaptcha extends HTMLElement {
     this.shadowRoot.getElementById('allowed-action').style.display = 'none';
     this.shadowRoot.getElementById('refresh-captcha').style.display = 'none';
     this.shadowRoot.getElementById('captcha-solution').value = '';
-    this.shadowRoot.getElementById('captcha-display').style.display = 'block';
+    this.shadowRoot.getElementById('captcha-display').style.display = 'flex';
 
     fetch(`${this.gcApiUrl}/api/captcha/create`)
         .then(response => response.json())
@@ -270,10 +270,8 @@ export default class GenuineCaptcha extends HTMLElement {
                 resultElement.style.display = 'block';
                 resultElement.className = 'success';
                 resultElement.innerHTML = '<strong>Success!</strong> CAPTCHA verified correctly.';
-                const errorElement = this.shadowRoot.getElementById('captcha-error');
-                errorElement.style.display = 'none';
-                const containerElement = this.shadowRoot.getElementById('captcha-display');
-                containerElement.style.display = 'none';
+                this.shadowRoot.getElementById('captcha-error').style.display = 'none';
+                this.shadowRoot.getElementById('captcha-display').style.display = 'none';
                 this.shadowRoot.getElementById('captcha-input-container').style.display = 'none';
                 
                 this.handleVerify(solution, this.captchaSecret);
