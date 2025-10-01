@@ -160,7 +160,11 @@ export default class GenuineCaptcha extends HTMLElement {
       this.verifyCaptcha();
     });
 
-    this.loadCaptcha();
+    (async () => {
+      await Sleep(100);
+      this.loadCaptcha();
+    })();
+    
 
   }
 
@@ -245,6 +249,7 @@ export default class GenuineCaptcha extends HTMLElement {
             this.shadowRoot.getElementById('refresh-captcha').style.display = 'inline-block';
         })
         .catch(error => {
+
             console.error("Error loading captcha:", error);
             this.shadowRoot.getElementById('captcha-loading').innerHTML = 
                 "Error loading CAPTCHA. Please try again.";
