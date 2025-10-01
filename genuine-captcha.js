@@ -201,10 +201,10 @@ export default class GenuineCaptcha extends HTMLElement {
   };
 
   static get observedAttributes() {
-    return ['prompt'];
+    return ['api-url', 'api-key'];
   }
   attributeChangedCallback(name, oldValue, newValue) {
-    if (name === 'prompt') this.prompt = newValue;
+    if (name === 'api-url') this.gcApiUrl = newValue;
   }
 
   startTimer=(delay)=> {
