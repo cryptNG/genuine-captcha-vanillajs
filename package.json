@@ -1,5 +1,5 @@
 {
-  "name": "@genuine-captcha/webcomponents",
+  "name": "@genuine-captcha/web-components",
   "version": "1.0.0",
   "type":"module",
   "main": "genuine-captcha.js",
