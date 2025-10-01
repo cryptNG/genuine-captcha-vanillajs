@@ -47,7 +47,7 @@ import {GenuineCaptcha} from '@genuine-captcha/web-components';
 To use the `<genuine-captcha>` component, wrap for example your form send button within the `<genuine-captcha>` element. Like:
 
 ```html
-<form action="https://formspree.io/f/{form_id}" method="post">
+<form action="https://genuine-forms.io/s/{form_id}" method="post">
   <label for="email">Your Email</label>
   <input name="Email" id="email" type="email">
   <genuine-captcha>
