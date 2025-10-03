@@ -223,7 +223,9 @@ export default class GenuineCaptcha extends HTMLElement {
     this.shadowRoot.getElementById('captcha-image').style.display = 'none';
     this.shadowRoot.getElementById('captcha-input-container').style.display = 'none';
     this.shadowRoot.getElementById('captcha-error').style.display = 'none';
+    this.shadowRoot.getElementById('captcha-error').classList.remove( 'error');
     this.shadowRoot.getElementById('allowed-action').style.display = 'none';
+    this.shadowRoot.querySelector('.captcha-result').classList.remove( 'success');
     this.shadowRoot.getElementById('refresh-captcha').style.display = 'none';
     this.shadowRoot.getElementById('captcha-solution').value = '';
     this.shadowRoot.getElementById('captcha-display').style.display = 'flex';
@@ -272,8 +274,7 @@ export default class GenuineCaptcha extends HTMLElement {
             if (response.ok) {
                 this.shadowRoot.getElementById('allowed-action').style.display = 'block';
                 const resultElement = this.shadowRoot.querySelector('.captcha-result');
-                resultElement.style.display = 'block';
-                resultElement.className = 'success';
+                resultElement.classList.add( 'success');
                 resultElement.innerHTML = '<strong>Success!</strong> CAPTCHA verified correctly.';
                 this.shadowRoot.getElementById('captcha-error').style.display = 'none';
                 this.shadowRoot.getElementById('captcha-display').style.display = 'none';
@@ -283,7 +284,7 @@ export default class GenuineCaptcha extends HTMLElement {
             } else {
                 const errorElement = this.shadowRoot.getElementById('captcha-error');
                 errorElement.style.display = 'block';
-                errorElement.className = 'error';
+                errorElement.classList.add('error');
                 errorElement.innerHTML = '<strong>Error:</strong> Incorrect solution. Please try again.';
             }
         })
@@ -291,7 +292,7 @@ export default class GenuineCaptcha extends HTMLElement {
             console.error("Error verifying captcha:", error);
             const errorElement = this.shadowRoot.getElementById('captcha-error');
             errorElement.style.display = 'block';
-            resultElement.className = 'error';
+            errorElement.classList.add('error');
             resultElement.innerHTML = '<strong>Error:</strong> Failed to verify. Please try again.';
         });
     }
