@@ -6,7 +6,7 @@ export default class GenuineCaptcha extends HTMLElement {
   shadowRoot = null;
   captchaSecret=null;
   timerId=null;
-  gcApiUrl = window.location.origin.indexOf('localhost')>-1 ? window.location.origin : `https://api.genuine-captcha.io`;
+  gcApiUrl =  `https://api.genuine-captcha.io`;
   handleVerify=(a,b)=>{};
   handleReset=()=>{};
   constructor() {
