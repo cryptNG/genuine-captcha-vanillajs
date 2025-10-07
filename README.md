@@ -37,7 +37,7 @@ npm install @genuine-captcha/web-components
 You might, depending on your bundler, have to use the package somewhere to make it available in your project. For example in emberjsjust add the import statement to the app.js file 
 
 ```js
-import {GenuineCaptcha} from '@genuine-captcha/web-components';
+import '@genuine-captcha/web-components';
 ```
 
 ## Usage

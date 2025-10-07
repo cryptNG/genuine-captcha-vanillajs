@@ -11,6 +11,41 @@ export default class GenuineCaptcha extends HTMLElement {
   handleReset=()=>{};
   constructor() {
     super();
+    this.texts = {};
+    if(navigator.language.toLowerCase().indexOf('de')===0){
+      this.texts = {
+        puzzleTitle: 'Kleines Rätsel: Was ist die Lösung?',
+        inputPlaceholder: 'Deine Antwort',
+        verifyButton: 'Überprüfen',
+        refreshButton: 'Neues CAPTCHA',
+        loadingCaptcha: 'Lade CAPTCHA...',
+        errorLoadingCaptcha: 'Fehler beim Laden des CAPTCHAs. Bitte versuche es erneut.',
+        errorIncorrectSolution: 'Falsche Lösung. Bitte versuche es erneut.',
+        errorFailedToVerify: 'Fehler bei der Überprüfung. Bitte versuche es erneut.',
+        successMessage: 'Erfolg! CAPTCHA korrekt gelöst.',
+        alertNoSolution: 'Bitte gib deine Antwort zum CAPTCHA ein',
+        responseOk: '<strong>Erfolg!</strong> CAPTCHA korrekt gelöst.',
+        responseNotOk: '<strong>Fehler:</strong> Falsche Lösung. Bitte versuche es erneut.',
+        responseFailedToVerify: '<strong>Fehler:</strong> Fehler bei der Überprüfung. Bitte versuche es erneut.'
+      };
+    }
+    if(navigator.language.toLowerCase().indexOf('en')===0 || this.texts.puzzleTitle===undefined){
+      this.texts = {
+        puzzleTitle: 'Tiny puzzle time: what is the solution?',
+        inputPlaceholder: 'Your answer',
+        verifyButton: 'Verify',
+        refreshButton: 'Try Another CAPTCHA',
+        loadingCaptcha: 'Loading CAPTCHA...',
+        errorLoadingCaptcha: 'Error loading CAPTCHA. Please try again.',
+        errorIncorrectSolution: 'Incorrect solution. Please try again.',
+        errorFailedToVerify: 'Failed to verify. Please try again.',
+        successMessage: 'Success! CAPTCHA verified correctly.',
+        alertNoSolution: 'Please enter your answer to the CAPTCHA',
+        responseOk: '<strong>Success!</strong> CAPTCHA verified correctly.',
+        responseNotOk: '<strong>Error:</strong> Incorrect solution. Please try again.',
+        responseFailedToVerify: '<strong>Error:</strong> Failed to verify. Please try again.'
+      };
+    }
     this.prompt = '';
     this.captchaSecret = '';
     const template = document.getElementById('genuine-captcha');
@@ -147,6 +182,12 @@ export default class GenuineCaptcha extends HTMLElement {
     shadowRoot.appendChild(style);
     shadowRoot.appendChild(templateContent.cloneNode(true));
 
+    shadowRoot.querySelector('.captcha-container #puzzle-title').innerText = this.texts.puzzleTitle;
+    shadowRoot.querySelector('.captcha-container #captcha-solution').placeholder = this.texts.inputPlaceholder;
+    shadowRoot.querySelector('.captcha-container #verify-captcha').innerText = this.texts.verifyButton;
+    shadowRoot.querySelector('.captcha-container #refresh-captcha').innerText = this.texts.refreshButton;
+    shadowRoot.querySelector('.captcha-container #loading-catcha').innerText = this.texts.loadingCaptcha;
+
     this.registerOptionsChange();
     this.registerHandleVerify();
     this.registerHandleReset();
@@ -254,14 +295,14 @@ export default class GenuineCaptcha extends HTMLElement {
 
             console.error("Error loading captcha:", error);
             this.shadowRoot.getElementById('captcha-loading').innerHTML = 
-                "Error loading CAPTCHA. Please try again.";
+                this.texts.errorLoadingCaptcha;
         });
     }
 
     verifyCaptcha() {
         const solution = this.shadowRoot.getElementById('captcha-solution').value.trim();
         if (!solution) {
-            alert('Please enter your answer to the CAPTCHA');
+            alert(this.texts.alertNoSolution);
             return;
         }
 
@@ -275,7 +316,7 @@ export default class GenuineCaptcha extends HTMLElement {
                 this.shadowRoot.getElementById('allowed-action').style.display = 'block';
                 const resultElement = this.shadowRoot.querySelector('.captcha-result');
                 resultElement.classList.add( 'success');
-                resultElement.innerHTML = '<strong>Success!</strong> CAPTCHA verified correctly.';
+                resultElement.innerHTML = this.texts.responseOk;
                 this.shadowRoot.getElementById('captcha-error').style.display = 'none';
                 this.shadowRoot.getElementById('captcha-display').style.display = 'none';
                 this.shadowRoot.getElementById('captcha-input-container').style.display = 'none';
@@ -285,7 +326,7 @@ export default class GenuineCaptcha extends HTMLElement {
                 const errorElement = this.shadowRoot.getElementById('captcha-error');
                 errorElement.style.display = 'block';
                 errorElement.classList.add('error');
-                errorElement.innerHTML = '<strong>Error:</strong> Incorrect solution. Please try again.';
+                errorElement.innerHTML = this.texts.responseNotOk;
             }
         })
         .catch(error => {
@@ -293,7 +334,7 @@ export default class GenuineCaptcha extends HTMLElement {
             const errorElement = this.shadowRoot.getElementById('captcha-error');
             errorElement.style.display = 'block';
             errorElement.classList.add('error');
-            resultElement.innerHTML = '<strong>Error:</strong> Failed to verify. Please try again.';
+            resultElement.innerHTML = this.texts.responseFailedToVerify;
         });
     }
 }
@@ -313,12 +354,12 @@ if (typeof document !== 'undefined') {
                 <img id="captcha-image" alt="CAPTCHA Challenge" src=""/>
                 <div id="captcha-loading" style="display: none;">
                     <div class="spinner"></div>
-                    <p>Loading CAPTCHA...</p>
+                    <p id="loading-catcha">Loading CAPTCHA...</p>
                 </div>
             </div>
             
             <div id="captcha-input-container" style="display: block;">
-                <p>Tiny puzzle time: what is the solution?</p>
+                <p id="puzzle-title">Tiny puzzle time: what is the solution?</p>
                 <div class="input-group">
                     <input type="text" id="captcha-solution" placeholder="Your answer">
                     <button id="verify-captcha">Verify</button>
