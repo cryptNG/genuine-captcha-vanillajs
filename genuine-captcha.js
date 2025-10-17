@@ -57,20 +57,8 @@ export default class GenuineCaptcha extends HTMLElement {
     const style = document.createElement('style');
     style.textContent = `
           :host{
-            --underline-color:red;
-            --underline-style:dashed;
-            --underline-width:0.1em;
-            --underline-top:calc(50% + 0.5em);
-            --text-color:inherited;
-            --text-family:revert;
-            --text-size:auto;
-            --text-cursor:pointer;
-            --underline-rgb:linear-gradient(90deg, #e50b58,#b29d23,#55ddbd);
-            --underline-rgb-1:linear-gradient(90deg, #ae1ffd,#ff3c34,#9bbf24);
-            --underline-rgb-2:linear-gradient(130deg,#2E3192,#1BFFFF 76.05%);
-            --underline-rgb-3:linear-gradient(130deg,#ff7a18,#af002d 41.07%,#319197 76.05%);
-            --underline-rgb-5:linear-gradient(130deg,#ff7a18,#af002d 41.07%,#319197 76.05%);
-            --asterisk-margin-right:0.2em;
+            --verify-button-background-color:#6366f1;
+            --verify-button-background-color-hover:#4346d4;
           }
 
           .captcha-container {
@@ -78,8 +66,9 @@ export default class GenuineCaptcha extends HTMLElement {
             flex-direction: column;
             align-items: center;
             gap: 20px;
+            width:100%;
         }
-            #captcha-display {
+          #captcha-display {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -135,7 +124,7 @@ export default class GenuineCaptcha extends HTMLElement {
         
         button {
             padding: 8px 16px;
-            background-color: #6366f1;
+            background-color: var(--verify-button-background-color);
             color: white;
             border: none;
             border-radius: 6px;
@@ -144,7 +133,7 @@ export default class GenuineCaptcha extends HTMLElement {
         }
         
         button:hover {
-            background-color: #4f46e5;
+            background-color: var(--verify-button-background-color-hover);
         }
         
         #captcha-error {
