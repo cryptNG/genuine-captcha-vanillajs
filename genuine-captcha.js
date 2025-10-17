@@ -121,6 +121,12 @@ export default class GenuineCaptcha extends HTMLElement {
             border: 1px solid #e2e8f0;
             border-radius: 6px;
         }
+
+        #allowed-action{
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
         
         button {
             padding: 8px 16px;
@@ -302,7 +308,7 @@ export default class GenuineCaptcha extends HTMLElement {
         })
         .then(response => {
             if (response.ok) {
-                this.shadowRoot.getElementById('allowed-action').style.display = 'block';
+                this.shadowRoot.getElementById('allowed-action').style.display = 'flex';
                 const resultElement = this.shadowRoot.querySelector('.captcha-result');
                 resultElement.classList.add( 'success');
                 resultElement.innerHTML = this.texts.responseOk;
