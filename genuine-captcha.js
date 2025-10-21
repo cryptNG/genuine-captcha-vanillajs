@@ -1,14 +1,30 @@
-
-
 //defer loading because of fastboot and similar
 
 export default class GenuineCaptcha extends HTMLElement {
   shadowRoot = null;
   captchaSecret=null;
   timerId=null;
+  name='';
   gcApiUrl =  `https://api.genuine-captcha.io`;
-  handleVerify=(a,b)=>{};
-  handleReset=()=>{};
+  handleVerify=(a,b,c)=>{};
+  handleReset=(a)=>{};
+  
+  _handleVerify=async (solution, secret)=>{
+    if(this.name!==''){
+      this.handleVerify(this.name,solution, secret);
+    }else{
+      this.handleVerify(solution, secret);
+    }
+  }
+  
+  _handleReset=async ()=>{
+    if(this.name!==''){
+      this.handleReset(this.name);
+    }else{
+      this.handleReset();
+    }
+  }
+  
   constructor() {
     super();
     this.texts = {};
@@ -46,7 +62,7 @@ export default class GenuineCaptcha extends HTMLElement {
         responseFailedToVerify: '<strong>Error:</strong> Failed to verify. Please try again.'
       };
     }
-    this.prompt = '';
+    
     this.captchaSecret = '';
     const template = document.getElementById('genuine-captcha');
     const templateContent = template.content;
@@ -183,11 +199,12 @@ export default class GenuineCaptcha extends HTMLElement {
     shadowRoot.querySelector('.captcha-container #refresh-captcha').innerText = this.texts.refreshButton;
     shadowRoot.querySelector('.captcha-container #loading-catcha').innerText = this.texts.loadingCaptcha;
 
-    this.registerOptionsChange();
     this.registerHandleVerify();
     this.registerHandleReset();
+    
     shadowRoot.querySelector('.captcha-container #refresh-captcha').addEventListener('click', (event) => {
       event.stopPropagation();
+      this._handleReset();
       this.loadCaptcha();
     });
 
@@ -200,20 +217,9 @@ export default class GenuineCaptcha extends HTMLElement {
       await Sleep(100);
       this.loadCaptcha();
     })();
-    
-
   }
 
-  registerOptionsChange = async () => {
-    const body = document.querySelector('body');
-    while (body.genuineCaptchaRegisterOptionChange === undefined) {
-      await Sleep(100);
-    }
-    body.genuineCaptchaRegisterOptionChange(this.handleOptionsChange);
-  };
-
   registerHandleVerify = async () => {
-    const body = document.querySelector('body');
     while (window.genuineCaptchaHandleVerify === undefined) {
       await Sleep(100);
     }
@@ -221,30 +227,19 @@ export default class GenuineCaptcha extends HTMLElement {
   };
 
   registerHandleReset = async () => {
-    const body = document.querySelector('body');
     while (window.genuineCaptchaReset === undefined) {
       await Sleep(100);
     }
     this.handleReset = window.genuineCaptchaReset;
   };
 
-
-  handleOptionsChange = (options) => {
-    if ((options?.highlight || null) !== null) {
-      options.highlight
-        .split(',')
-        .forEach((hl) =>
-          this.shadowRoot.querySelector('.captcha-container').classList.add(hl)
-        );
-    }
-
-  };
-
   static get observedAttributes() {
-    return ['api-url', 'api-key'];
+    return ['api-url', 'api-key','name'];
   }
+  
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'api-url') this.gcApiUrl = newValue;
+    if (name === 'name') this.name = newValue;
   }
 
   startTimer=(delay)=> {
@@ -276,7 +271,7 @@ export default class GenuineCaptcha extends HTMLElement {
             // Store the secret for verification later
             this.captchaSecret = data.SecretAsBase64;
 
-            const validTill= data.validTill || Date.now() + (1000 * 60 * 5); //5 minutes from now
+            const validTill= (data.validTill || Date.now() + (1000 * 60 * 5))-2000; //5 minutes from now
         
             this.startTimer(validTill - Date.now()); //reload 4 minutes before expiry
             
@@ -287,7 +282,6 @@ export default class GenuineCaptcha extends HTMLElement {
             this.shadowRoot.getElementById('refresh-captcha').style.display = 'inline-block';
         })
         .catch(error => {
-
             console.error("Error loading captcha:", error);
             this.shadowRoot.getElementById('captcha-loading').innerHTML = 
                 this.texts.errorLoadingCaptcha;
@@ -300,8 +294,6 @@ export default class GenuineCaptcha extends HTMLElement {
             alert(this.texts.alertNoSolution);
             return;
         }
-
-        
         
         fetch(`${this.gcApiUrl}/api/captcha/verify?captchaSolution=${solution}&captchaSecret=${encodeURIComponent(this.captchaSecret)}`, {
             mode: 'cors'
@@ -316,7 +308,7 @@ export default class GenuineCaptcha extends HTMLElement {
                 this.shadowRoot.getElementById('captcha-display').style.display = 'none';
                 this.shadowRoot.getElementById('captcha-input-container').style.display = 'none';
                 
-                this.handleVerify(solution, this.captchaSecret);
+                this._handleVerify(solution, this.captchaSecret);
             } else {
                 const errorElement = this.shadowRoot.getElementById('captcha-error');
                 errorElement.style.display = 'block';
@@ -329,7 +321,7 @@ export default class GenuineCaptcha extends HTMLElement {
             const errorElement = this.shadowRoot.getElementById('captcha-error');
             errorElement.style.display = 'block';
             errorElement.classList.add('error');
-            resultElement.innerHTML = this.texts.responseFailedToVerify;
+            errorElement.innerHTML = this.texts.responseFailedToVerify;
         });
     }
 }
