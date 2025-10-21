@@ -1,7 +1,7 @@
 //defer loading because of fastboot and similar
 
 export default class GenuineCaptcha extends HTMLElement {
-  shadowRoot = null;
+
   captchaSecret=null;
   timerId=null;
   name='';
@@ -33,6 +33,7 @@ export default class GenuineCaptcha extends HTMLElement {
         puzzleTitle: 'Kleines Rätsel: Was ist die Lösung?',
         inputPlaceholder: 'Deine Antwort',
         verifyButton: 'Überprüfen',
+        verifying:'Prüfend...',
         refreshButton: 'Neues CAPTCHA',
         loadingCaptcha: 'Lade CAPTCHA...',
         errorLoadingCaptcha: 'Fehler beim Laden des CAPTCHAs. Bitte versuche es erneut.',
@@ -50,6 +51,7 @@ export default class GenuineCaptcha extends HTMLElement {
         puzzleTitle: 'Tiny puzzle time: what is the solution?',
         inputPlaceholder: 'Your answer',
         verifyButton: 'Verify',
+        verifying:'Verifying...',
         refreshButton: 'Try Another CAPTCHA',
         loadingCaptcha: 'Loading CAPTCHA...',
         errorLoadingCaptcha: 'Error loading CAPTCHA. Please try again.',
@@ -67,8 +69,9 @@ export default class GenuineCaptcha extends HTMLElement {
     const template = document.getElementById('genuine-captcha');
     const templateContent = template.content;
 
-    const shadowRoot = this.attachShadow({ mode: 'open' });
-    this.shadowRoot = shadowRoot;
+    this.attachShadow({ mode: 'open' });
+
+    const shadowRoot = this.shadowRoot;
 
     const style = document.createElement('style');
     style.textContent = `
@@ -193,6 +196,18 @@ export default class GenuineCaptcha extends HTMLElement {
     shadowRoot.appendChild(style);
     shadowRoot.appendChild(templateContent.cloneNode(true));
 
+    shadowRoot.querySelector('#captcha-solution').setAttribute('aria-label', this.texts.inputPlaceholder);
+    shadowRoot.querySelector('#verify-captcha').setAttribute('aria-label', this.texts.verifyButton);
+
+    const liveRegion = document.createElement('div');
+    liveRegion.setAttribute('role', 'status');
+    liveRegion.setAttribute('aria-live', 'polite');
+    liveRegion.style.position = 'absolute';
+    liveRegion.style.left = '-10000px';
+    liveRegion.id = 'sr-announcements';
+    shadowRoot.appendChild(liveRegion);
+
+
     shadowRoot.querySelector('.captcha-container #puzzle-title').innerText = this.texts.puzzleTitle;
     shadowRoot.querySelector('.captcha-container #captcha-solution').placeholder = this.texts.inputPlaceholder;
     shadowRoot.querySelector('.captcha-container #verify-captcha').innerText = this.texts.verifyButton;
@@ -220,10 +235,19 @@ export default class GenuineCaptcha extends HTMLElement {
   }
 
   registerHandleVerify = async () => {
-    while (window.genuineCaptchaHandleVerify === undefined) {
-      await Sleep(100);
+   let attempts = 0;
+    const maxAttempts = 150; // 15 seconds
+    
+    while (window.genuineCaptchaHandleVerify === undefined && attempts < maxAttempts) {
+        attempts++;
+        await Sleep(100);
     }
-    this.handleVerify = window.genuineCaptchaHandleVerify;
+    
+    if (window.genuineCaptchaHandleVerify) {
+        this.handleVerify = window.genuineCaptchaHandleVerify;
+    } else {
+        console.warn('genuineCaptchaHandleVerify hook not found, using default');
+    }
   };
 
   registerHandleReset = async () => {
@@ -250,6 +274,18 @@ export default class GenuineCaptcha extends HTMLElement {
     }
 
   loadCaptcha () {
+    if (this.isLoading) {
+        console.log('Captcha already loading');
+        return;
+    }
+    this.isLoading = true;
+
+    if (this.timerId) {
+        clearTimeout(this.timerId);
+        this.timerId = null;
+    }
+    try{
+      
     this.shadowRoot.getElementById('captcha-loading').style.display = 'block';
     this.shadowRoot.getElementById('captcha-image').style.display = 'none';
     this.shadowRoot.getElementById('captcha-input-container').style.display = 'none';
@@ -261,9 +297,20 @@ export default class GenuineCaptcha extends HTMLElement {
     this.shadowRoot.getElementById('captcha-solution').value = '';
     this.shadowRoot.getElementById('captcha-display').style.display = 'flex';
 
+    }catch(error){
+      console.error(error);
+      this.isLoading=false;
+      return;
+    }
     fetch(`${this.gcApiUrl}/api/captcha/create`)
         .then(response => response.json())
         .then(data => {
+
+          if (!data || !data.ImageAsBase64 || !data.SecretAsBase64) {
+
+             console.error('Invalid captcha response format');
+             return;
+          }
             const imageType = 'image/png';
             const base64Image = `data:${imageType};base64,${data.ImageAsBase64}`;
             this.shadowRoot.getElementById('captcha-image').src = base64Image;
@@ -285,17 +332,45 @@ export default class GenuineCaptcha extends HTMLElement {
             console.error("Error loading captcha:", error);
             this.shadowRoot.getElementById('captcha-loading').innerHTML = 
                 this.texts.errorLoadingCaptcha;
+        })
+        .finally(() => {
+            this.isLoading = false;
         });
     }
 
     verifyCaptcha() {
-        const solution = this.shadowRoot.getElementById('captcha-solution').value.trim();
-        if (!solution) {
-            alert(this.texts.alertNoSolution);
+        if (this.isVerifying) {
             return;
         }
-        
-        fetch(`${this.gcApiUrl}/api/captcha/verify?captchaSolution=${solution}&captchaSecret=${encodeURIComponent(this.captchaSecret)}`, {
+        const solution = this.shadowRoot.getElementById('captcha-solution').value.trim();
+        if (!solution) {
+            const errorElement = this.shadowRoot.getElementById('captcha-error');
+            errorElement.style.display = 'block';
+            errorElement.classList.add('error');
+            errorElement.textContent = this.texts.alertNoSolution;
+            
+            // Announce to screen readers
+            const liveRegion = this.shadowRoot.getElementById('sr-announcements');
+            liveRegion.textContent = this.texts.alertNoSolution;
+            
+            // Focus the input
+            this.shadowRoot.getElementById('captcha-solution').focus();
+            return;
+        }
+
+        const sanitizedSolution = solution.replace(/[^\w\s-]/g, '');
+    
+        // Limit length
+        if (sanitizedSolution.length > 3) {
+            // Show error
+            return;
+        }
+        this.isVerifying = true;
+        const verifyBtn = this.shadowRoot.getElementById('verify-captcha');
+        const originalText = verifyBtn.textContent;
+        verifyBtn.disabled = true;
+        verifyBtn.textContent = this.texts.verifying;
+        fetch(`${this.gcApiUrl}/api/captcha/verify?captchaSolution=${sanitizedSolution}&captchaSecret=${encodeURIComponent(this.captchaSecret)}`, {
             mode: 'cors'
         })
         .then(response => {
@@ -322,6 +397,11 @@ export default class GenuineCaptcha extends HTMLElement {
             errorElement.style.display = 'block';
             errorElement.classList.add('error');
             errorElement.innerHTML = this.texts.responseFailedToVerify;
+        })
+        .finally(() => {
+            this.isVerifying = false;
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = originalText;
         });
     }
 }
@@ -330,12 +410,7 @@ async function Sleep(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-
-//defer loading because of fastboot and similar
-if (typeof document !== 'undefined') {
-  const tpl1 = document.createElement('template');
-  tpl1.id = 'genuine-captcha';
-  tpl1.innerHTML = `<div class="captcha-container">
+const _innerHTML = `<div class="captcha-container">
         <div id="captcha-display">
             <div id="captcha-image-container">
                 <img id="captcha-image" alt="CAPTCHA Challenge" src=""/>
@@ -363,9 +438,39 @@ if (typeof document !== 'undefined') {
         
     </div>`;
 
-  document.querySelector('body').prepend(tpl1);
-
-  customElements.define('genuine-captcha', GenuineCaptcha);
+//defer loading because of fastboot and similar
+if (typeof document !== 'undefined') {
+    // Check if already defined
+    if (customElements.get('genuine-captcha')) {
+        console.warn('genuine-captcha already defined');
+    } else {
+        // Wait for DOM to be ready
+        const initTemplate = () => {
+            // Check if template already exists
+            if (!document.getElementById('genuine-captcha')) {
+                const tpl1 = document.createElement('template');
+                tpl1.id = 'genuine-captcha';
+                tpl1.innerHTML = _innerHTML;
+                
+                // Ensure body exists
+                if (document.body) {
+                    document.body.prepend(tpl1);
+                } else {
+                    document.addEventListener('DOMContentLoaded', () => {
+                        document.body.prepend(tpl1);
+                    });
+                }
+            }
+        };
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTemplate);
+        } else {
+            initTemplate();
+        }
+        
+        customElements.define('genuine-captcha', GenuineCaptcha);
+    }
 }
 
 export {GenuineCaptcha };
