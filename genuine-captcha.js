@@ -27,6 +27,7 @@ export default class GenuineCaptcha extends HTMLElement {
   
   constructor() {
     super();
+    this.abortController = new AbortController();
     this.texts = {};
     if(navigator.language.toLowerCase().indexOf('de')===0){
       this.texts = {
@@ -298,8 +299,13 @@ export default class GenuineCaptcha extends HTMLElement {
               ?.removeEventListener('click', this.verifyHandler);
       }
   }
-  
+
   loadCaptcha () {
+    if (this.abortController) {
+        this.abortController.abort();
+    }
+    this.abortController = new AbortController();
+
     if (this.isLoading) {
         console.log('Captcha already loading');
         return;
@@ -328,7 +334,10 @@ export default class GenuineCaptcha extends HTMLElement {
       this.isLoading=false;
       return;
     }
-    fetch(`${this.gcApiUrl}/api/captcha/create`)
+    fetch(`${this.gcApiUrl}/api/captcha/create`,{
+        mode: 'cors',
+        signal: this.abortController.signal
+    })
         .then(response => response.json())
         .then(data => {
 
@@ -355,6 +364,10 @@ export default class GenuineCaptcha extends HTMLElement {
             this.shadowRoot.getElementById('refresh-captcha').style.display = 'inline-block';
         })
         .catch(error => {
+            if (error.name === 'AbortError') {
+                console.log('Captcha load aborted');
+                return;
+            }
             console.error("Error loading captcha:", error);
             this.shadowRoot.getElementById('captcha-loading').innerHTML = 
                 this.texts.errorLoadingCaptcha;
@@ -397,7 +410,8 @@ export default class GenuineCaptcha extends HTMLElement {
         verifyBtn.disabled = true;
         verifyBtn.textContent = this.texts.verifying;
         fetch(`${this.gcApiUrl}/api/captcha/verify?captchaSolution=${sanitizedSolution}&captchaSecret=${encodeURIComponent(this.captchaSecret)}`, {
-            mode: 'cors'
+            mode: 'cors',
+            signal: this.abortController.signal
         })
         .then(response => {
             if (response.ok) {
@@ -418,6 +432,10 @@ export default class GenuineCaptcha extends HTMLElement {
             }
         })
         .catch(error => {
+            if (error.name === 'AbortError') {
+                console.log('Captcha load aborted');
+                return;
+            }
             console.error("Error verifying captcha:", error);
             const errorElement = this.shadowRoot.getElementById('captcha-error');
             errorElement.style.display = 'block';
