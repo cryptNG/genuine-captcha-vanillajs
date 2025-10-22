@@ -216,17 +216,20 @@ export default class GenuineCaptcha extends HTMLElement {
 
     this.registerHandleVerify();
     this.registerHandleReset();
-    
-    shadowRoot.querySelector('.captcha-container #refresh-captcha').addEventListener('click', (event) => {
-      event.stopPropagation();
-      this._handleReset();
-      this.loadCaptcha();
-    });
 
-    shadowRoot.querySelector('.captcha-container #verify-captcha').addEventListener('click', (event) => {
-      event.stopPropagation();
-      this.verifyCaptcha();
-    });
+    this.refreshHandler = (event) => {
+        event.stopPropagation();
+        this._handleReset();
+        this.loadCaptcha();
+    };
+    
+    this.verifyHandler = (event) => {
+        event.stopPropagation();
+        this.verifyCaptcha();
+    };
+    
+    this.shadowRoot.querySelector('#refresh-captcha').addEventListener('click', this.refreshHandler);
+    this.shadowRoot.querySelector('#verify-captcha').addEventListener('click', this.verifyHandler);
 
     (async () => {
       await Sleep(100);
@@ -268,11 +271,34 @@ export default class GenuineCaptcha extends HTMLElement {
 
   startTimer=(delay)=> {
     clearTimeout(this.timerId);
-      this.timerId = setTimeout(() => {
-        this.loadCaptcha();
-      }, delay); //reload every 5 minutes
-    }
+    this.timerId = setTimeout(() => {
+      this.loadCaptcha();
+    }, delay); //reload every 5 minutes
+  }
 
+  disconnectedCallback() {
+      // Clear timer
+      if (this.timerId) {
+          clearTimeout(this.timerId);
+          this.timerId = null;
+      }
+      
+      // Abort fetch if in progress
+      if (this.abortController) {
+          this.abortController.abort();
+      }
+      
+      // Remove event listeners
+      if (this.refreshHandler) {
+          this.shadowRoot.querySelector('#refresh-captcha')
+              ?.removeEventListener('click', this.refreshHandler);
+      }
+      if (this.verifyHandler) {
+          this.shadowRoot.querySelector('#verify-captcha')
+              ?.removeEventListener('click', this.verifyHandler);
+      }
+  }
+  
   loadCaptcha () {
     if (this.isLoading) {
         console.log('Captcha already loading');
