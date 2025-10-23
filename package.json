@@ -1,11 +1,11 @@
 {
   "name": "@genuine-captcha/web-components",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "type": "module",
   "main": "genuine-captcha.js",
   "module": "genuine-captcha.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "minify": "minify genuine-captcha.js > genuine-captcha.min.js"
   },
   "repository": {
     "type": "git",
@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/cryptNG/genuine-captcha-vanillajs/issues"
   },
-  "homepage": "https://github.com/cryptNG/genuine-captcha-vanillajs#readme"
+  "homepage": "https://github.com/cryptNG/genuine-captcha-vanillajs#readme",
+  "dependencies": {
+    "minify": "^14.1.0"
+  }
 }

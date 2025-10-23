@@ -457,24 +457,24 @@ async function Sleep(milliseconds) {
 const _innerHTML = `<div class="captcha-container">
         <div id="captcha-display">
             <div id="captcha-image-container">
-                <img id="captcha-image" alt="CAPTCHA Challenge" src=""/>
+                <img id="captcha-image" alt="CAPTCHA Challenge" src="" loading="lazy"/>
                 <div id="captcha-loading" style="display: none;">
                     <div class="spinner"></div>
-                    <p id="loading-catcha">Loading CAPTCHA...</p>
+                    <p id="loading-catcha"></p>
                 </div>
             </div>
             
             <div id="captcha-input-container" style="display: block;">
                 <p id="puzzle-title">Tiny puzzle time: what is the solution?</p>
                 <div class="input-group">
-                    <input type="text" id="captcha-solution" placeholder="Your answer">
-                    <button id="verify-captcha">Verify</button>
+                    <input type="text" id="captcha-solution" placeholder="">
+                    <button id="verify-captcha"></button>
                 </div>
             </div>
             
             <div id="captcha-error" style="display: none;"></div>
             
-            <button id="refresh-captcha" style="display: inline-block;">Try Another CAPTCHA</button>
+            <button id="refresh-captcha" style="display: inline-block;"></button>
         </div>
         <div id="allowed-action" style="display: none;">
             <div class="captcha-result"></div>
