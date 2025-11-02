@@ -167,7 +167,7 @@ export default class GenuineCaptcha extends HTMLElement {
             border-radius: 6px;
             display: none;
             margin-top: 15px;
-            width: 100%;
+       
         }
 
         .captcha-result {
@@ -175,7 +175,7 @@ export default class GenuineCaptcha extends HTMLElement {
             border-radius: 6px;
             display: block;
             margin-bottom: 15px;
-            width: 100%;
+         
         }
         
         .success {
