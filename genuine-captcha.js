@@ -88,6 +88,7 @@ export default class GenuineCaptcha extends HTMLElement {
             gap: 20px;
             width:100%;
             position:relative;
+            overflow: hidden;
         }
           #captcha-display {
             display: flex;
