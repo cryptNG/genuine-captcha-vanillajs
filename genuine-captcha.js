@@ -93,28 +93,56 @@ export default class GenuineCaptcha extends HTMLElement {
             flex-direction: column;
             align-items: center;
             gap: 20px;
+            position: relative;
         }
         
         #captcha-image-container {
             position: relative;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
+            
             overflow: hidden;
+            width: 200px;
+            height: calc(150px + 2rem);
+            display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          justify-content: center;
         }
         
         #captcha-image {
             max-width: 100%;
-            display: none;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
         }
         
         #captcha-loading {
+
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100%;
+            position: absolute;
+            background: white;
+            width: 100%;
+            border-radius: 0.5rem;
+            opacity: 0;
+            
+            transition:all 0.2s ease-in-out;
+        }
+        #captcha-loading.show{
+          opacity:0.9;
+          top:0;
+        }
+
+        #captcha-loading:not(.show){
+          animation:moveOut 0.3s linear forwards;
         }
         
+        @keyframes moveOut {
+          0% { top:0; }
+          99% { top:0; }
+          100% { top:-100%; }
+        }
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             border-radius: 50%;
@@ -147,18 +175,35 @@ export default class GenuineCaptcha extends HTMLElement {
           flex-direction: column;
           align-items: center;
         }
+
+        #refresh-captcha{
+          background-color: transparent;
+          border: none;
+          text-decoration: underline;
+          font-size: small;
+          color: var(--form-primary);
+          cursor:pointer;
+
+        }
         
-        button {
+        #verify-captcha {
             padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        #verify-captcha:not(:disabled) {
             background-color: var(--verify-button-background-color);
             color: white;
-            border: none;
-            border-radius: 6px;
+            border: 2px solid var(--verify-button-background-color);
             cursor: pointer;
             transition: background-color 0.3s;
         }
+
+        #verify-captcha:disabled,#verify-captcha.disabled {
+          cursor:not-allowed;
+        }
         
-        button:hover {
+        #verify-captcha:not(:disabled):hover {
             background-color: var(--verify-button-background-color-hover);
         }
         
@@ -212,8 +257,18 @@ export default class GenuineCaptcha extends HTMLElement {
     shadowRoot.querySelector('.captcha-container #puzzle-title').innerText = this.texts.puzzleTitle;
     shadowRoot.querySelector('.captcha-container #captcha-solution').placeholder = this.texts.inputPlaceholder;
     shadowRoot.querySelector('.captcha-container #verify-captcha').innerText = this.texts.verifyButton;
-    shadowRoot.querySelector('.captcha-container #refresh-captcha').innerText = this.texts.refreshButton;
+    shadowRoot.querySelector('.captcha-container #refresh-captcha .refresh-captcha-text').innerText = this.texts.refreshButton;
     shadowRoot.querySelector('.captcha-container #loading-catcha').innerText = this.texts.loadingCaptcha;
+
+    shadowRoot.querySelector('.captcha-container #captcha-solution').addEventListener('keyup',(event)=>{
+      const input = event.target;
+      if(input.checkValidity()){
+        shadowRoot.querySelector('.captcha-container #verify-captcha').disabled=false;
+      }else{
+        shadowRoot.querySelector('.captcha-container #verify-captcha').disabled=true;
+      }
+
+    })
 
     this.registerHandleVerify();
     this.registerHandleReset();
@@ -318,14 +373,10 @@ export default class GenuineCaptcha extends HTMLElement {
     }
     try{
       
-    this.shadowRoot.getElementById('captcha-loading').style.display = 'block';
-    this.shadowRoot.getElementById('captcha-image').style.display = 'none';
-    this.shadowRoot.getElementById('captcha-input-container').style.display = 'none';
+    this.shadowRoot.getElementById('captcha-loading').classList.add('show');
     this.shadowRoot.getElementById('captcha-error').style.display = 'none';
     this.shadowRoot.getElementById('captcha-error').classList.remove( 'error');
-    this.shadowRoot.getElementById('allowed-action').style.display = 'none';
     this.shadowRoot.querySelector('.captcha-result').classList.remove( 'success');
-    this.shadowRoot.getElementById('refresh-captcha').style.display = 'none';
     this.shadowRoot.getElementById('captcha-solution').value = '';
     this.shadowRoot.getElementById('captcha-display').style.display = 'flex';
 
@@ -357,11 +408,7 @@ export default class GenuineCaptcha extends HTMLElement {
         
             this.startTimer(validTill - Date.now()); //reload 4 minutes before expiry
             
-            // Show the captcha and input field
-            this.shadowRoot.getElementById('captcha-image').style.display = 'block';
-            this.shadowRoot.getElementById('captcha-loading').style.display = 'none';
-            this.shadowRoot.getElementById('captcha-input-container').style.display = 'block';
-            this.shadowRoot.getElementById('refresh-captcha').style.display = 'inline-block';
+            this.shadowRoot.getElementById('captcha-loading').classList.remove('show');
         })
         .catch(error => {
             if (error.name === 'AbortError') {
@@ -458,23 +505,25 @@ const _innerHTML = `<div class="captcha-container">
         <div id="captcha-display">
             <div id="captcha-image-container">
                 <img id="captcha-image" alt="CAPTCHA Challenge" src="" loading="lazy"/>
-                <div id="captcha-loading" style="display: none;">
-                    <div class="spinner"></div>
-                    <p id="loading-catcha"></p>
-                </div>
+                <button id="refresh-captcha">	
+&#10227; <span class="refresh-captcha-text"/></button>
+                
             </div>
             
             <div id="captcha-input-container" style="display: block;">
                 <p id="puzzle-title">Tiny puzzle time: what is the solution?</p>
                 <div class="input-group">
-                    <input type="text" id="captcha-solution" placeholder="">
-                    <button id="verify-captcha"></button>
+                    <input type="text" id="captcha-solution" placeholder="" pattern="[0-9]{1,2}" required>
+                    <button id="verify-captcha" disabled></button>
                 </div>
             </div>
             
             <div id="captcha-error" style="display: none;"></div>
             
-            <button id="refresh-captcha" style="display: inline-block;"></button>
+            <div id="captcha-loading">
+                <div class="spinner"></div>
+                <p id="loading-catcha"></p>
+            </div>
         </div>
         <div id="allowed-action" style="display: none;">
             <div class="captcha-result"></div>

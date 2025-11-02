@@ -1,6 +1,6 @@
 {
   "name": "@genuine-captcha/web-components",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "type": "module",
   "main": "genuine-captcha.js",
   "module": "genuine-captcha.js",
