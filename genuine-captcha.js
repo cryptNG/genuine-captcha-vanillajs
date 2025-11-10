@@ -79,6 +79,10 @@ export default class GenuineCaptcha extends HTMLElement {
           :host{
             --verify-button-background-color:#6366f1;
             --verify-button-background-color-hover:#4346d4;
+            --text-color-light: rgba(209, 209, 209, 1);
+            --text-color-dark: #212121;
+            --text-color: light-dark( var(--text-color-dark),var(--text-color-light));
+            --font-size: larger;
           }
 
           .captcha-container {
@@ -89,12 +93,14 @@ export default class GenuineCaptcha extends HTMLElement {
             width:100%;
             position:relative;
             overflow: hidden;
+            color: var(--text-color);
+            font-size: var(--font-size);
         }
           #captcha-display {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 5px;
             position: relative;
             opacity:0;
             transition:all 0.2s ease-in-out;
@@ -202,7 +208,7 @@ export default class GenuineCaptcha extends HTMLElement {
           border: none;
           text-decoration: underline;
           font-size: small;
-          color: var(--form-primary);
+          color: light-dark( var(--form-primary), var(--form-primary-light, #3273ffff));
           cursor:pointer;
 
         }
@@ -249,7 +255,7 @@ export default class GenuineCaptcha extends HTMLElement {
         }
         
         .success {
-            background-color: rgba(16, 185, 129, 0.1);
+            background-color: light-dark(rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.2));
             color: #10b981;
             padding: 15px;
             border-radius: 6px;
@@ -259,7 +265,7 @@ export default class GenuineCaptcha extends HTMLElement {
         }
         
         .error {
-            background-color: rgba(239, 68, 68, 0.1);
+            background-color: light-dark(rgba(239, 68, 68, 0.1),rgba(239, 68, 68, 0.2));
             color: #ef4444;
         }
       `;
